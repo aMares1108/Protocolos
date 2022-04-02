@@ -1,0 +1,11 @@
+La trama es Ethernet II IPv4	Frame Size: 419 Util size: 405	Protocol: 0800	Source: f0:ef:86:79:31:69: Destination: 01:00:5e:00:00:fb:  (Multidifusion)
+La trama es Ethernet II IPv4	Frame Size: 404 Util size: 390	Protocol: 0800	Source: f0:ef:86:79:31:69: Destination: 01:00:5e:00:00:fb:  (Multidifusion)
+La trama es Ethernet II IPv4	Frame Size: 119 Util size: 105	Protocol: 0800	Source: 34:6b:46:e9:cf:e2: Destination: ff:ff:ff:ff:ff:ff:  (Difusion)
+La trama es Ethernet II IPv4	Frame Size: 135 Util size: 121	Protocol: 0800	Source: a4:00:e2:cf:fa:bf: Destination: f4:d1:08:56:07:3e:  (Unidifusion)
+La trama es Ethernet II IPv4	Frame Size: 60 Util size: 46	Protocol: 0800	Source: f4:d1:08:56:07:3e: Destination: a4:00:e2:cf:fa:bf:  (Unidifusion)
+Total(5):  IEEE 802.3(0)  Ethernet II(5)
+IPv4: 5	IPv6: 0	ARP: 0	Control de flujo: 0	Seguridad MAC: 0
+f4:d1:08:56:07:3e:   1 paquetes enviados
+a4:00:e2:cf:fa:bf:   1 paquetes enviados
+34:6b:46:e9:cf:e2:   1 paquetes enviados
+f0:ef:86:79:31:69:   2 paquetes enviados
