@@ -1,4 +1,5 @@
 // Para compilar: gcc  Hilos.c -lpthread -o Hilos
+// Para ejecutar: sudo ./Sniffer 2 enp0s10
 
 #include <stdio.h>
 #include <unistd.h>
@@ -8,6 +9,8 @@
 #include <sys/socket.h>
 #include <linux/if.h>
 #include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
 
@@ -20,32 +23,37 @@ typedef struct packet
 
 typedef struct mac
 {
-    unsigned char direccion[6];
-    unsigned int cuenta;
+    struct in_addr direccion;
+    unsigned int cuenta_s;
+    unsigned int cuenta_d;
     struct mac *siguiente;
 } Mac;
 
-Mac* countMAC(Mac* lista, unsigned char *direccion);
+Mac* countMAC(Mac* lista, struct in_addr direccion, unsigned short int source);
 Mac* liberarMAC(Mac* lista);
 void printMAC(Mac* lista);
 Paquete* addPacket(Paquete* paquete, char* buffer, int size);
 Paquete* nextPacket(Paquete* paquete);
 void *funcion_hilo(void *argumento);
 void analizarPaquete(char * buffer, int size);
-// void printData(char * data, int size);
+void printData(char * data, int size);
 
 Paquete *lista = NULL;
 Mac* dirs = NULL;
 FILE* archivo;
 int leidos = 0;
 int size = 0;
-int eth1 = 0;
-int eth2 = 0;
-int ip4 = 0;
-int ip6 = 0;
-int arp = 0;
-int flujo = 0;
-int seg = 0;
+int icmp = 0;
+int igmp = 0;
+int ip = 0;
+int tcp = 0;
+int udp = 0;
+int ipv6 = 0;
+int ospf = 0;
+int sctp = 0;
+// int flujo = 0;
+// int seg = 0;
+int count_size[] = {0, 0, 0, 0, 0};
 int i;
 int j;
 int npack;
@@ -59,7 +67,7 @@ int main(int argc, const char* argv[]) {
     
     int sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if(sock<0){
-        fprintf(stderr, "Unable to open socket to %s %d\n", argv[1], sock);
+        fprintf(stderr, "Unable to open socket to %s %d\n", argv[2], sock);
         exit(EXIT_FAILURE);
     }
     
@@ -112,13 +120,17 @@ int main(int argc, const char* argv[]) {
     system(command);
 
     if(pthread_join(id_hilo, NULL)){
-        printf("Problema al crear el enlace con otro hilo\n");
+        fprintf(stderr, "Problema al crear el enlace con otro hilo\n");
         exit(EXIT_FAILURE);
     }
 
-    fprintf(archivo, "Total(%d):  IEEE 802.3(%d)  Ethernet II(%d)\nIPv4: %d\tIPv6: %d\tARP: %d\tControl de flujo: %d\tSeguridad MAC: %d\n", leidos, eth1, eth2, ip4, ip6, arp, flujo, seg);
+    // fprintf(archivo, "Total(%d):  IEEE 802.3(%d)  Ethernet II(%d)\nIPv4: %d\tIPv6: %d\tARP: %d\tControl de flujo: %d\tSeguridad MAC: %d\n", leidos, eth1, eth2, ip4, ip6, arp, flujo, seg);
     printMAC(dirs);
     liberarMAC(dirs);
+
+    fprintf(archivo, "\n----Conteo de paquetes:----\n%d ICMP\n%d IGMP\n%d IP\n%d TCP\n%d UDP\n%d IPv6\n%d OSPF\n%d SCTP\n", icmp, igmp, ip, tcp, udp, ipv6, ospf, sctp);
+    fprintf(archivo, "----Paquetes por tamano---\n0-159  %d\n160-639  %d\n640-1279  %d\n1280-5119  %d\n5120 o mayor  %d\n", count_size[0], count_size[1], count_size[2], count_size[3], count_size[4]);
+    fprintf(archivo, "Total de paquetes analizados: %d\n",leidos);
 
     fclose(archivo);
 
@@ -128,100 +140,166 @@ int main(int argc, const char* argv[]) {
 void analizarPaquete(char * buffer, int size){
     unsigned short int proto;
     struct ethhdr *ethernet;
+    struct iphdr *iph;
 
     ethernet = (struct ethhdr*) buffer;
     proto = ethernet->h_proto;
     proto = (proto&0xff00)>>8 | (proto&0x00ff)<<8;
 
-    if(proto<=0x05dc){
-        fprintf(archivo, "La trama es IEEE 802.3 y no puede ser analizada: %04x\n", proto);
-        eth1++;
-    } else if (proto>=0x0600) {
-        fprintf(archivo, "La trama es Ethernet II ");
-        eth2++;
-        switch(proto){
-            case 0x0800:
-                fprintf(archivo, "IPv4");
-                ip4++;
-                break;
-            case 0x86dd:
-                fprintf(archivo, "IPv6");
-                ip6++;
-                break;
-            case 0x0806:
-                fprintf(archivo, "ARP");
-                arp++;
-                break;
-            case 0x8808:
-                fprintf(archivo, "Control de flujo Ethernet");
-                flujo++;
-                break;
-            case 0x88e5:
-                fprintf(archivo, "Seguridad MAC");
-                seg++;
-                break;
-            default:
-                fprintf(archivo, "Otro tipo");
+    if(proto==0x800){
+        iph = (struct iphdr*) (buffer+sizeof(struct ethhdr));
+        iph->tot_len = htons(iph->tot_len);
+        iph->id = htons(iph->id);
+        iph->check = htons(iph->check);
+        iph->frag_off = htons(iph->frag_off);
+        struct in_addr source;
+        source.s_addr = iph->saddr;
+        struct in_addr destiny;
+        destiny.s_addr = iph->daddr;
+        dirs = countMAC(dirs, source, 1);
+        dirs = countMAC(dirs, destiny, 0);
+        if((iph->tot_len-iph->ihl*4)<160){
+            count_size[0]++;
+        } else if((iph->tot_len-iph->ihl*4)<640){
+            count_size[1]++;
+        } else if((iph->tot_len-iph->ihl*4)<1280){
+            count_size[2]++;
+        } else if((iph->tot_len-iph->ihl*4)<5120){
+            count_size[3]++;
+        } else{
+            count_size[4]++;
         }
-        fprintf(archivo, "\t");
-
-        // printData(buffer+sizeof(struct ethhdr), size-sizeof(struct ethhdr));
-        fprintf(archivo, "Frame Size: %d Util size: %ld\t", size, size-sizeof(struct ethhdr));
-
-        fprintf(archivo, "Protocol: %04x\t", proto);
-        fprintf(archivo, "Source: ");
-        for(i=0; i<6; i++){
-            fprintf(archivo, "%02x:", ethernet->h_source[i]);
+        // printf("The IP address is %s\n", inet_ntoa(ip_addr));
+        fprintf(archivo, "Saddr: %s,", inet_ntoa(source));
+        fprintf(archivo, " Daddr: %s\n", inet_ntoa(destiny));
+        fprintf(archivo, "HLen: %d Total_Len: %d ID: %d TTL: %d\n", iph->ihl*4, iph->tot_len, iph->id, iph->ttl);
+        fprintf(archivo, "Procolo de capa superior(%d): ", iph->protocol);
+        switch (iph->protocol) {
+        case 1:
+            fprintf(archivo, "ICMP");
+            icmp++;
+            break;
+        case 2:
+            fprintf(archivo, "IGMP");
+            igmp++;
+            break;
+        case 4:
+            fprintf(archivo, "IP");
+            ip++;
+            break;
+        case 6:
+            fprintf(archivo, "TCP");
+            tcp++;
+            break;
+        case 17:
+            fprintf(archivo, "UDP");
+            udp++;
+            break;
+        case 41:
+            fprintf(archivo, "IPv6");
+            ipv6++;
+            break;
+        case 89:
+            fprintf(archivo, "OSPF");
+            ospf++;
+            break;
+        case 132:
+            fprintf(archivo, "SCTP");
+            sctp++;
+            break;
+        default:
+            fprintf(archivo, "Protocolo no identificado");
         }
-        fprintf(archivo, "\b ");
-
-        fprintf(archivo, "Destination: ");
-        for(i=0; i<6; i++){
-            fprintf(archivo, "%02x:", ethernet->h_dest[i]);
+        fprintf(archivo, "\nCarga util: %d\nTipo de servicio(0x%02x): ", iph->tot_len-iph->ihl*4, iph->tos);
+        switch (iph->tos>>5)
+        {
+        case 0:
+            fprintf(archivo, "De rutina");
+            break;
+        case 1:
+            fprintf(archivo, "Prioritario");
+            break;
+        case 2:
+            fprintf(archivo, "Inmediato");
+            break;
+        case 3:
+            fprintf(archivo, "Relampago (flash)");
+            break;
+        case 4:
+            fprintf(archivo, "Invalidacion relampago (flash override)");
+            break;
+        case 5:
+            fprintf(archivo, "Critico");
+            break;
+        case 6:
+            fprintf(archivo, "Control de interred");
+            break;
+        case 7:
+            fprintf(archivo, "Control de red");
+            break;
+        
+        default:
+            fprintf(archivo, "(Error) Precedencia no identificada");
+            break;
         }
-        fprintf(archivo, "\b  ");
-        dirs = countMAC(dirs, ethernet->h_source);
-        if(ethernet->h_dest[0]==0xff){
-            unsigned short int dest = 0xff;
-            for(i=0; i<6; i++){
-                dest &= ethernet->h_dest[i];
-            }
-            if(dest==0xff)
-                fprintf(archivo, "(Difusion)");
-            else
-                fprintf(archivo, "(Multidifusion)");
-        } else if(ethernet->h_dest[0]&0x1){
-            fprintf(archivo, "(Multidifusion)");
+        fprintf(archivo, ", ");
+        if ((iph->tos&0b11110)==0){
+            fprintf(archivo, "Servicio normal");
         } else {
-            fprintf(archivo, "(Unidifusion)");
+            if ((iph->tos&0b10000)!=0){
+                fprintf(archivo, "Minimiza el retardo, ");
+            }
+            if ((iph->tos&0b01000)!=0){
+                fprintf(archivo, "Maximiza el rendimiento, ");
+            }
+            if ((iph->tos&0b00100)!=0){
+                fprintf(archivo, "Maximiza la fiabilidad, ");
+            }
+            if ((iph->tos&0b00010)!=0){
+                fprintf(archivo, "Minimiza el coste monetario");
+            }
         }
-        fprintf(archivo, "\n");
+        fprintf(archivo, "\nFragmentacion: ");
 
-    } else {
-        fprintf(archivo, "La trama no pudo ser identificada como Ethernet II ni como IEEE802.3\n");
+        if ((iph->frag_off&0x2000)==0){
+            if ((iph->frag_off&0x1fff)==0){
+                fprintf(archivo, "Unico fragmento");
+            } else{
+                fprintf(archivo, "Ultimo fragmento");
+            } 
+        } else{
+            if ((iph->frag_off&0x1fff)==0){
+                fprintf(archivo, "Primer fragmento");
+            } else{
+                fprintf(archivo, "Fragmento intermedio");
+            } 
+        }
+        fprintf(archivo, " (Primer byte: %d Ultimo byte: %d)\n\n", (iph->frag_off&0x1fff)*8, (iph->frag_off&0x1fff)*8 + iph->tot_len-1);
+        
+        // printData(buffer, size);
     }
 }
 
-// void printData(char * data, int size){
-//     int i;
-//     int row_size = 16;
-//     unsigned short int datum;
-//     for(i=0; i<size; i++){
-//         datum = data[i] & 0xff;
-//         // printf("%02x ", datum);
-//         if(datum>=32 && datum<=127)
-//             printf("%c ", datum);
-//         else
-//             printf(". ");
-//         if(i%row_size==row_size-1) printf("\n");
-//     }
-//     printf("\n");
-//     for(i=0; i<size; i++){
-//         printf("%02x ", data[i]&0xff);
-//         if(i%row_size==row_size-1) printf("\n");
-//     }
-//     printf("\n");
-// }
+void printData(char * data, int size){
+    int i;
+    int row_size = 4;
+    unsigned short int datum;
+    // for(i=0; i<size; i++){
+    //     datum = data[i] & 0xff;
+    //     // printf("%02x ", datum);
+    //     if(datum>=32 && datum<=127)
+    //         printf("%c ", datum);
+    //     else
+    //         printf(". ");
+    //     if(i%row_size==row_size-1) printf("\n");
+    // }
+    printf("\n");
+    for(i=14; i<34; i++){
+        printf("%02x ", data[i]&0xff);
+        if((i-14)%row_size==row_size-1) printf("\n");
+    }
+    printf("\n");
+}
 
 Paquete* crearPaquete(char* buffer, int size){
     Paquete *nuevo = (Paquete*) malloc(sizeof(Paquete));
@@ -262,32 +340,36 @@ Paquete* nextPacket(Paquete* paquete){
     return aux;
 }
 
-Mac* crearMAC(unsigned char *direccion){
+Mac* crearMAC(struct in_addr direccion){
     Mac *nuevo = (Mac*) malloc(sizeof(Mac));
     if(nuevo==NULL){
         fprintf(stderr, "Ocurrio un error al manipular memoria dinamica\n");
         exit(-1);
     }
-    for(i=0;i<6;i++)
-        nuevo->direccion[i] = direccion[i];
-    nuevo->cuenta = 1;
+    nuevo->direccion = direccion;
+    nuevo->cuenta_s = 0;
+    nuevo->cuenta_d = 0;
     nuevo->siguiente = NULL;
     return nuevo;
 }
 
-Mac* countMAC(Mac* lista, unsigned char *direccion){
+Mac* countMAC(Mac* lista, struct in_addr direccion, unsigned short int source){
     Mac *aux = lista;
-    unsigned short int bandera = 1;
     while(aux!=NULL){
-        for(i=0;i<6;i++)
-            bandera &= direccion[i]==aux->direccion[i];
-        if(bandera==1){
-            aux->cuenta++;
+        if(direccion.s_addr==aux->direccion.s_addr){
+            if(source==0)
+                aux->cuenta_d++;
+            else
+                aux->cuenta_s++;
             return lista;
         }
         aux = aux->siguiente;
     }
     Mac *nuevo = crearMAC(direccion);
+    if(source==0)
+        nuevo->cuenta_d++;
+    else
+        nuevo->cuenta_s++;
     if(lista==NULL)
         return nuevo;
     nuevo->siguiente = lista;
@@ -307,10 +389,10 @@ Mac* liberarMAC(Mac* lista){
 
 void printMAC(Mac* lista){
     Mac* aux = lista;
+    fprintf(archivo, "----Resumen por direcciones----\n");
     while(aux!=NULL){
-        for(i=0; i<6; i++)
-            fprintf(archivo, "%02x:", aux->direccion[i]);
-        fprintf(archivo, "\b   %d paquetes enviados\n", aux->cuenta);
+        fprintf(archivo, "%s", inet_ntoa(aux->direccion));
+        fprintf(archivo, "  %d paquetes enviados, %d paquetes recibidos\n", aux->cuenta_s, aux->cuenta_d);
         aux = aux->siguiente;
     }
 }

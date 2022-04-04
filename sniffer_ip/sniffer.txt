@@ -1,11 +1,166 @@
-La trama es Ethernet II IPv4	Frame Size: 419 Util size: 405	Protocol: 0800	Source: f0:ef:86:79:31:69: Destination: 01:00:5e:00:00:fb:  (Multidifusion)
-La trama es Ethernet II IPv4	Frame Size: 404 Util size: 390	Protocol: 0800	Source: f0:ef:86:79:31:69: Destination: 01:00:5e:00:00:fb:  (Multidifusion)
-La trama es Ethernet II IPv4	Frame Size: 119 Util size: 105	Protocol: 0800	Source: 34:6b:46:e9:cf:e2: Destination: ff:ff:ff:ff:ff:ff:  (Difusion)
-La trama es Ethernet II IPv4	Frame Size: 135 Util size: 121	Protocol: 0800	Source: a4:00:e2:cf:fa:bf: Destination: f4:d1:08:56:07:3e:  (Unidifusion)
-La trama es Ethernet II IPv4	Frame Size: 60 Util size: 46	Protocol: 0800	Source: f4:d1:08:56:07:3e: Destination: a4:00:e2:cf:fa:bf:  (Unidifusion)
-Total(5):  IEEE 802.3(0)  Ethernet II(5)
-IPv4: 5	IPv6: 0	ARP: 0	Control de flujo: 0	Seguridad MAC: 0
-f4:d1:08:56:07:3e:   1 paquetes enviados
-a4:00:e2:cf:fa:bf:   1 paquetes enviados
-34:6b:46:e9:cf:e2:   1 paquetes enviados
-f0:ef:86:79:31:69:   2 paquetes enviados
+Saddr: 192.168.100.112, Daddr: 255.255.255.255
+HLen: 20 Total_Len: 200 ID: 5160 TTL: 255
+Procolo de capa superior(17): UDP
+Carga util: 180
+Tipo de servicio(0x00): De rutina, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 199)
+
+Saddr: 192.168.100.111, Daddr: 255.255.255.255
+HLen: 20 Total_Len: 216 ID: 5030 TTL: 255
+Procolo de capa superior(17): UDP
+Carga util: 196
+Tipo de servicio(0x00): De rutina, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 215)
+
+Saddr: 192.168.100.4, Daddr: 192.168.100.255
+HLen: 20 Total_Len: 105 ID: 63474 TTL: 64
+Procolo de capa superior(17): UDP
+Carga util: 85
+Tipo de servicio(0xb8): Critico, Minimiza el retardo, Maximiza el rendimiento, 
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 104)
+
+Saddr: 172.19.0.1, Daddr: 172.19.0.1
+HLen: 20 Total_Len: 193 ID: 64251 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.19.0.1, Daddr: 172.19.0.1
+HLen: 20 Total_Len: 193 ID: 64252 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.19.0.1, Daddr: 172.19.0.1
+HLen: 20 Total_Len: 193 ID: 64253 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.18.0.1, Daddr: 172.18.0.1
+HLen: 20 Total_Len: 193 ID: 57085 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.18.0.1, Daddr: 172.18.0.1
+HLen: 20 Total_Len: 193 ID: 57086 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.18.0.1, Daddr: 172.18.0.1
+HLen: 20 Total_Len: 193 ID: 57087 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.17.0.1, Daddr: 172.17.0.1
+HLen: 20 Total_Len: 193 ID: 63176 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.17.0.1, Daddr: 172.17.0.1
+HLen: 20 Total_Len: 193 ID: 63177 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.17.0.1, Daddr: 172.17.0.1
+HLen: 20 Total_Len: 193 ID: 63178 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.19.0.1, Daddr: 172.19.0.1
+HLen: 20 Total_Len: 193 ID: 64254 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.19.0.1, Daddr: 172.19.0.1
+HLen: 20 Total_Len: 193 ID: 64255 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.19.0.1, Daddr: 172.19.0.1
+HLen: 20 Total_Len: 193 ID: 64256 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.18.0.1, Daddr: 172.18.0.1
+HLen: 20 Total_Len: 193 ID: 57088 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.18.0.1, Daddr: 172.18.0.1
+HLen: 20 Total_Len: 193 ID: 57089 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.18.0.1, Daddr: 172.18.0.1
+HLen: 20 Total_Len: 193 ID: 57090 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.17.0.1, Daddr: 172.17.0.1
+HLen: 20 Total_Len: 193 ID: 63179 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+Saddr: 172.17.0.1, Daddr: 172.17.0.1
+HLen: 20 Total_Len: 193 ID: 63180 TTL: 64
+Procolo de capa superior(1): ICMP
+Carga util: 173
+Tipo de servicio(0xc0): Control de interred, Servicio normal
+Fragmentacion: Unico fragmento (Primer byte: 0 Ultimo byte: 192)
+
+----Resumen por direcciones----
+172.17.0.1  5 paquetes enviados, 5 paquetes recibidos
+172.18.0.1  6 paquetes enviados, 6 paquetes recibidos
+172.19.0.1  6 paquetes enviados, 6 paquetes recibidos
+192.168.100.255  0 paquetes enviados, 1 paquetes recibidos
+192.168.100.4  1 paquetes enviados, 0 paquetes recibidos
+192.168.100.111  1 paquetes enviados, 0 paquetes recibidos
+255.255.255.255  0 paquetes enviados, 2 paquetes recibidos
+192.168.100.112  1 paquetes enviados, 0 paquetes recibidos
+
+----Conteo de paquetes:----
+17 ICMP
+0 IGMP
+0 IP
+0 TCP
+3 UDP
+0 IPv6
+0 OSPF
+0 SCTP
+----Paquetes por tamano---
+0-159  1
+160-639  19
+640-1279  0
+1280-5119  0
+5120 o mayor  0
+Total de paquetes analizados: 20
