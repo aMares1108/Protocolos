@@ -36,16 +36,22 @@ unsigned char hw_addr[6];
 unsigned char pt_addr[4];
 struct sockaddr saddr;
 int size_saddr = sizeof(saddr);
+int sock;
+int ac;
 
-void init_packet(msgARP *msg, const char* ip, int sock);
-void analize_packet(msgARP msg, int sock, struct sockaddr *saddr, int* size_saddr);
-void send_packet(int sock, msgARP msg, struct sockaddr* saddr, int size_saddr);
+void* init_packet(void* ip);
+void* analize_packet();
+void send_packet(msgARP msg);
 void printData(msgARP msg);
 
 int main(int argc, const char* argv[]) {
-       
+    ac = argc-2;
+    if(argc<3){
+        fprintf(stderr, "Expected more arguments. %d received.\n", argc-1);
+        exit(EXIT_FAILURE);
+    }
     int optval = 0;
-    int sock = socket(PF_INET, SOCK_PACKET, htons(ETH_P_ARP));
+    sock = socket(PF_INET, SOCK_PACKET, htons(ETH_P_ARP));
     if(sock<0){
         fprintf(stderr, "Unable to open socket %d\n", sock);
         exit(EXIT_FAILURE);
@@ -73,13 +79,31 @@ int main(int argc, const char* argv[]) {
     }
     fprintf(archivo, "IP\t\tMAC\n");
 
-    msgARP msg;
     recvfrom(sock, 0, 0, 0, &saddr, &size_saddr);
 
+    pthread_t *id_hilo = (pthread_t*) malloc((argc-2)*sizeof(pthread_t));
+    if(id_hilo==NULL){
+        fprintf(stderr, "Ocurrio un error al manipular memoria dinamica\n");
+        exit(-1);
+    }
+    pthread_t hilo_analiza;
+    if(pthread_create(&hilo_analiza, NULL, analize_packet, NULL)){
+        fprintf(stderr, "Problema en la creacion del hilo\n");
+        exit(EXIT_FAILURE);
+    }
     for(int i=0; i<argc-2; i++){
-        init_packet(&msg, argv[2+i], sock);
-        send_packet(sock, msg, &saddr, size_saddr);
-        analize_packet(msg, sock, &saddr, &size_saddr);
+        if(pthread_create(&id_hilo[i], NULL, init_packet, (void*)argv[2+i])){
+            fprintf(stderr, "Problema en la creacion del hilo\n");
+            exit(EXIT_FAILURE);
+        }
+        if(pthread_join(id_hilo[i], NULL)){
+            fprintf(stderr, "Problema en la union del hilo\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    if(pthread_join(hilo_analiza, NULL)){
+        fprintf(stderr, "Problema en la union del hilo\n");
+        exit(EXIT_FAILURE);
     }
     
     fclose(archivo);
@@ -87,48 +111,55 @@ int main(int argc, const char* argv[]) {
     exit(EXIT_SUCCESS);
 }
 
-void init_packet(msgARP *msg, const char* ip, int sock){
-    bcopy(hw_addr, &msg->origenMAC, 6);
-    bcopy(hw_addr, &msg->origenEthernet, 6);
-    bcopy(pt_addr, &msg->origenIP, 4);
+void* init_packet(void* ip_a){
+    char *ip = (char*) ip_a;
+    msgARP msg;
+    bcopy(hw_addr, &msg.origenMAC, 6);
+    bcopy(hw_addr, &msg.origenEthernet, 6);
+    bcopy(pt_addr, &msg.origenIP, 4);
 
     struct in_addr addr;
     inet_aton(ip, &addr); //arpa/inet.h
-    bcopy(&addr.s_addr, &msg->dentinoIP, 4);
+    bcopy(&addr.s_addr, &msg.dentinoIP, 4);
 
-    memset(&msg->destinoEthernet, 0xff, 6);
+    memset(&msg.destinoEthernet, 0xff, 6);
 
-    msg->longitudHardware = 6;
-    msg->longitudProtocolo = 4;
-    msg->tipoEthernet = htons(ETH_P_ARP);
-    msg->tipoHardware = htons(ARPHRD_ETHER);
-    msg->tipoProtocolo = htons(ETH_P_IP);
-    msg->tipoMensaje = htons(ARPOP_REQUEST);
+    msg.longitudHardware = 6;
+    msg.longitudProtocolo = 4;
+    msg.tipoEthernet = htons(ETH_P_ARP);
+    msg.tipoHardware = htons(ARPHRD_ETHER);
+    msg.tipoProtocolo = htons(ETH_P_IP);
+    msg.tipoMensaje = htons(ARPOP_REQUEST);
 
-    bzero(msg->destinoMAC, 6);
+    bzero(msg.destinoMAC, 6);
 
+    send_packet(msg);
 }
 
-void send_packet(int sock, msgARP msg, struct sockaddr* saddr, int size_saddr){
-    if (sendto(sock, &msg, sizeof(msg), 0, saddr, size_saddr)<=0){
-        fprintf(stderr, "Error al enviar paquete\n");
-        exit(EXIT_FAILURE);
+void send_packet(msgARP msg){
+    if (sendto(sock, &msg, sizeof(msg), 0, &saddr, size_saddr)<=0){
+        fprintf(stderr, "Error al enviar paquete a \n");
+        for(int j=0; j<4; j++){
+            fprintf(stderr, "%d.", msg.dentinoIP[j]);
+        }
+        fprintf(stderr, "\n");
     }
 }
 
-void analize_packet(msgARP msg, int sock, struct sockaddr *saddr, int* size_saddr){
-    msgARP msg1;
+void* analize_packet(){
     int j;
-    for(j=0; j<10; j++){
-        recvfrom(sock, &msg1, sizeof(msg1), 0, saddr, size_saddr);
+    int read = 0;
+    for(j=0; j<ac*10; j++){
+        msgARP msg1;
+        recvfrom(sock, &msg1, sizeof(msg1), 0, &saddr, &size_saddr);
         if(htons(msg1.tipoMensaje)!=2){
             continue;
         }
-        if(bcmp(&msg.dentinoIP, &msg1.origenIP, 4)!=0){
-            fprintf(archivo, "Respuesta de otro host detectada\n");
-            j=10;
-            break;
-        }
+        // if(bcmp(&msg.dentinoIP, &msg1.origenIP, 4)!=0){
+        //     fprintf(stderr, "Respuesta de otro host detectada. ");
+        //     j=10;
+        //     break;
+        // }
 
         for(int i=0; i<4; i++){
             fprintf(archivo, "%d.", msg1.origenIP[i]);
@@ -138,16 +169,18 @@ void analize_packet(msgARP msg, int sock, struct sockaddr *saddr, int* size_sadd
             fprintf(archivo, "%02x:", msg1.origenMAC[i]);
         }
         fprintf(archivo, "\n");
-        break;
+        read++;
+        if(read>=ac)
+            break;
     }
-    if(j==10){
-        // printData(msg);
-        fprintf(stderr, "No se encontro la direccion ");
-        for(j=0; j<4; j++){
-            fprintf(stderr, "%d.", msg.dentinoIP[j]);
-        }
-        fprintf(stderr, "\n");
-    }
+    // if(j==10){
+    //     // printData(msg);
+    //     fprintf(stderr, "No se encontro la direccion ");
+    //     for(j=0; j<4; j++){
+    //         fprintf(stderr, "%d.", msg.dentinoIP[j]);
+    //     }
+    //     fprintf(stderr, "\n");
+    // }
 
 }
 
